@@ -8,6 +8,8 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
+  // TODO: signup page
+
   final _formKey = GlobalKey<FormState>();
 
   final TextEditingController email = TextEditingController();
@@ -26,9 +28,9 @@ class _SignupPageState extends State<SignupPage> {
       print("Email: ${email.text}");
       print("Password: ${password.text}");
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Signup successful")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Signup successful")));
     }
   }
 
@@ -42,7 +44,6 @@ class _SignupPageState extends State<SignupPage> {
           key: _formKey,
           child: Column(
             children: [
-              
               TextFormField(
                 controller: email,
                 decoration: const InputDecoration(labelText: "Email"),
@@ -60,10 +61,7 @@ class _SignupPageState extends State<SignupPage> {
               ),
               const SizedBox(height: 12),
 
-              ElevatedButton(
-                onPressed: _signup,
-                child: const Text("Sign Up"),
-              ),
+              ElevatedButton(onPressed: _signup, child: const Text("Sign Up")),
             ],
           ),
         ),

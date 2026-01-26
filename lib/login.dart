@@ -1,3 +1,4 @@
+import 'package:contact_manager_app/app_config.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -10,10 +11,12 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  // TODO: put state in provider
+
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
 
   bool isLoading = false;
 
@@ -29,18 +32,15 @@ class _LoginPageState extends State<LoginPage> {
 
     setState(() => isLoading = true);
 
-    final url = Uri.parse(
-      "https://crownless-unrequited-hana.ngrok-free.dev/login/"
-    );
+    final url = Uri.parse("${AppConfig.baseUrl}/login/");
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
 
     print("➡️ Sending login request to $url");
 
     try {
       final response = await http.post(
         url,
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "email": emailController.text.trim(),
           "password": passwordController.text,
@@ -55,21 +55,21 @@ class _LoginPageState extends State<LoginPage> {
       if (response.statusCode == 200) {
         final token = data["token"];
 
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessenger.showSnackBar(
           const SnackBar(content: Text("Login successful")),
         );
 
         // TODO: Save token using shared_preferences
-        // TODO: Navigate to home page
+        // TODO: Navigate to home page (can be handled in the main.dart)
 
         print("✅ Token received: $token");
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
+        scaffoldMessenger.showSnackBar(
           SnackBar(content: Text(data["error"] ?? "Login failed")),
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      scaffoldMessenger.showSnackBar(
         SnackBar(content: Text("Network error: $e")),
       );
     } finally {
