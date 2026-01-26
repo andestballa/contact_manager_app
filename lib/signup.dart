@@ -1,4 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import 'package:contact_manager_app/app_config.dart';
+import 'providers/auth_provider.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -8,12 +13,11 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
-  // TODO: signup page
-
   final _formKey = GlobalKey<FormState>();
+  final email = TextEditingController();
+  final password = TextEditingController();
 
-  final TextEditingController email = TextEditingController();
-  final TextEditingController password = TextEditingController();
+  bool isLoading = false;
 
   @override
   void dispose() {
@@ -22,15 +26,36 @@ class _SignupPageState extends State<SignupPage> {
     super.dispose();
   }
 
-  void _signup() {
-    if (_formKey.currentState!.validate()) {
-      // Here you would send data to backend
-      print("Email: ${email.text}");
-      print("Password: ${password.text}");
+  Future<void> _signup() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Signup successful")));
+    setState(() => isLoading = true);
+
+    try {
+      final response = await http.post(
+        Uri.parse("${AppConfig.baseUrl}/signup/"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "email": email.text.trim(),
+          "password": password.text,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        await context.read<AuthProvider>().login(data["token"]);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data["error"] ?? "Signup failed")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Network error: $e")),
+      );
+    } finally {
+      setState(() => isLoading = false);
     }
   }
 
@@ -39,7 +64,7 @@ class _SignupPageState extends State<SignupPage> {
     return Scaffold(
       appBar: AppBar(title: const Text("Sign Up")),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
@@ -47,21 +72,28 @@ class _SignupPageState extends State<SignupPage> {
               TextFormField(
                 controller: email,
                 decoration: const InputDecoration(labelText: "Email"),
-                validator: (value) =>
-                    value!.contains("@") ? null : "Enter a valid email",
+                validator: (v) =>
+                    v != null && v.contains("@") ? null : "Invalid email",
               ),
               const SizedBox(height: 12),
-
               TextFormField(
                 controller: password,
                 decoration: const InputDecoration(labelText: "Password"),
                 obscureText: true,
-                validator: (value) =>
-                    value!.length < 6 ? "Minimum 6 characters" : null,
+                validator: (v) =>
+                    v != null && v.length >= 6 ? null : "Min 6 characters",
               ),
-              const SizedBox(height: 12),
-
-              ElevatedButton(onPressed: _signup, child: const Text("Sign Up")),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: isLoading ? null : _signup,
+                child: isLoading
+                    ? const CircularProgressIndicator()
+                    : const Text("Sign Up"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Already have an account? Log in"),
+              ),
             ],
           ),
         ),
