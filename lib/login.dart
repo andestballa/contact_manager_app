@@ -1,8 +1,5 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
-import 'package:contact_manager_app/app_config.dart';
 import 'providers/auth_provider.dart';
 import 'signup.dart';
 
@@ -18,8 +15,6 @@ class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
-  bool isLoading = false;
-
   @override
   void dispose() {
     emailController.dispose();
@@ -27,41 +22,28 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  Future<void> _login() async {
+  Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => isLoading = true);
+    final auth = context.read<AuthProvider>();
 
-    try {
-      final response = await http.post(
-        Uri.parse("${AppConfig.baseUrl}/login/"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": emailController.text.trim(),
-          "password": passwordController.text,
-        }),
-      );
+    final success = await auth.login(
+      email: emailController.text,
+      password: passwordController.text,
+    );
 
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200) {
-        await context.read<AuthProvider>().login(data["token"]);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data["error"] ?? "Login failed")),
-        );
-      }
-    } catch (e) {
+    if (!success && auth.error != null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Network error: $e")),
+        SnackBar(content: Text(auth.error!)),
       );
-    } finally {
-      setState(() => isLoading = false);
     }
+    // Nëse success == true → AuthGate do bëjë redirect automatikisht
   }
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+
     return Scaffold(
       appBar: AppBar(title: const Text("Login")),
       body: Padding(
@@ -74,7 +56,7 @@ class _LoginPageState extends State<LoginPage> {
                 controller: emailController,
                 decoration: const InputDecoration(labelText: "Email"),
                 validator: (v) =>
-                    v != null && v.contains("@") ? null : "Invalid email",
+                    v != null && v.contains("@") ? null : "Email i pavlefshëm",
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -82,14 +64,14 @@ class _LoginPageState extends State<LoginPage> {
                 decoration: const InputDecoration(labelText: "Password"),
                 obscureText: true,
                 validator: (v) =>
-                    v != null && v.isNotEmpty ? null : "Password required",
+                    v != null && v.isNotEmpty ? null : "Password i detyrueshëm",
               ),
               const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: isLoading ? null : _login,
-                  child: isLoading
+                  onPressed: auth.isLoading ? null : _submit,
+                  child: auth.isLoading
                       ? const CircularProgressIndicator()
                       : const Text("Login"),
                 ),
@@ -101,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
                     MaterialPageRoute(builder: (_) => const SignupPage()),
                   );
                 },
-                child: const Text("Don't have an account? Sign up"),
+                child: const Text("Nuk ke llogari? Regjistrohu"),
               ),
             ],
           ),
