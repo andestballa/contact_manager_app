@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppConfig {
   // Replace with ngrok url
-  static const baseUrl = "https://ae041b757ef6.ngrok-free.app";
+  static const baseUrl = "https://crownless-unrequited-hana.ngrok-free.dev";
 
   static final themeData = ThemeData(
     useMaterial3: true,

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'providers/auth_provider.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -8,60 +10,72 @@ class SignupPage extends StatefulWidget {
 }
 
 class _SignupPageState extends State<SignupPage> {
-  // TODO: signup page
-
   final _formKey = GlobalKey<FormState>();
-
-  final TextEditingController email = TextEditingController();
-  final TextEditingController password = TextEditingController();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
 
   @override
   void dispose() {
-    email.dispose();
-    password.dispose();
+    emailController.dispose();
+    passwordController.dispose();
     super.dispose();
   }
 
-  void _signup() {
-    if (_formKey.currentState!.validate()) {
-      // Here you would send data to backend
-      print("Email: ${email.text}");
-      print("Password: ${password.text}");
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Signup successful")));
+    final auth = context.read<AuthProvider>();
+
+    final success = await auth.signup(
+      email: emailController.text,
+      password: passwordController.text,
+    );
+
+    if (!success && auth.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(auth.error!)),
+      );
     }
+    // Nëse success == true → AuthGate hap HomePage automatikisht
   }
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+
     return Scaffold(
       appBar: AppBar(title: const Text("Sign Up")),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
             children: [
               TextFormField(
-                controller: email,
+                controller: emailController,
                 decoration: const InputDecoration(labelText: "Email"),
-                validator: (value) =>
-                    value!.contains("@") ? null : "Enter a valid email",
+                validator: (v) =>
+                    v != null && v.contains("@") ? null : "Email i pavlefshëm",
               ),
               const SizedBox(height: 12),
-
               TextFormField(
-                controller: password,
+                controller: passwordController,
                 decoration: const InputDecoration(labelText: "Password"),
                 obscureText: true,
-                validator: (value) =>
-                    value!.length < 6 ? "Minimum 6 characters" : null,
+                validator: (v) =>
+                    v != null && v.length >= 6 ? null : "Min 6 karaktere",
               ),
-              const SizedBox(height: 12),
-
-              ElevatedButton(onPressed: _signup, child: const Text("Sign Up")),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: auth.isLoading ? null : _submit,
+                child: auth.isLoading
+                    ? const CircularProgressIndicator()
+                    : const Text("Sign Up"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Ke llogari? Login"),
+              ),
             ],
           ),
         ),
