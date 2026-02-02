@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
-import 'login.dart';
-import 'homepage.dart';
+import 'ui/login.dart';
+import 'ui/contact.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -11,14 +11,16 @@ class AuthGate extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
 
+    print('AuthGate rebuild — loggedIn=${auth.isLoggedIn}');
+
     if (!auth.isInitialized) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
-
+    // TODO why no const?
     return auth.isLoggedIn
-        ? const HomePage()
-        : const LoginPage();
+        ? ContactPage() // ⬅️ NO const
+        : LoginPage(); // ⬅️ NO const
   }
 }

@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'app_config.dart';
+
 import 'providers/auth_provider.dart';
+import 'providers/contact_provider.dart';
 import 'auth_gate.dart';
+import 'app_config.dart';
 
 void main() {
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => AuthProvider()..loadFromStorage(),
-      child: const MyApp(),
-    ),
-  );
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -18,10 +15,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: AppConfig.themeData,
-      home: const AuthGate(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => AuthProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => ContactProvider(),
+        ),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Contact Manager',
+        theme: AppConfig.themeData,
+        home: const AuthGate(),
+      ),
     );
   }
 }

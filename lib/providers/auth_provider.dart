@@ -10,13 +10,16 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
+  AuthProvider() {
+    loadFromStorage();
+  }
+
   String? get token => _token;
   bool get isLoggedIn => _token != null;
   bool get isInitialized => _initialized;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  /// Thirret në start të app-it
   Future<void> loadFromStorage() async {
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString("auth_token");
@@ -24,7 +27,6 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// LOGIN
   Future<bool> login({
     required String email,
     required String password,
@@ -34,20 +36,17 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final response = await http.post(
-        Uri.parse("${AppConfig.baseUrl}/login/"),
+        Uri.parse("${AppConfig.baseUrl}/api/login/"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": email.trim(),
-          "password": password,
-        }),
+        body: jsonEncode({"email": email.trim(), "password": password}),
       );
 
-      final data = jsonDecode(response.body);
-
       if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
         await _saveToken(data["token"]);
         return true;
       } else {
+        final data = jsonDecode(response.body);
         _error = data["error"] ?? "Login failed";
         return false;
       }
@@ -59,7 +58,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// SIGNUP
   Future<bool> signup({
     required String email,
     required String password,
@@ -69,12 +67,9 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final response = await http.post(
-        Uri.parse("${AppConfig.baseUrl}/signup/"),
+        Uri.parse("${AppConfig.baseUrl}/api/signup/"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": email.trim(),
-          "password": password,
-        }),
+        body: jsonEncode({"email": email.trim(), "password": password}),
       );
 
       final data = jsonDecode(response.body);
@@ -94,7 +89,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// LOGOUT
   Future<void> logout() async {
     _token = null;
     final prefs = await SharedPreferences.getInstance();
@@ -102,7 +96,6 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Helpers
   Future<void> _saveToken(String token) async {
     _token = token;
     final prefs = await SharedPreferences.getInstance();
