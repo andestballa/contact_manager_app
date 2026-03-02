@@ -1,3 +1,4 @@
+// lib/models/contact_model.dart
 class ContactModel {
   final int? id;
   final String name;
@@ -5,7 +6,7 @@ class ContactModel {
   final String email;
   final String phoneNumber;
 
-  const ContactModel({
+  ContactModel({
     this.id,
     required this.name,
     required this.surname,
@@ -15,38 +16,20 @@ class ContactModel {
 
   factory ContactModel.fromJson(Map<String, dynamic> json) {
     return ContactModel(
-      id: json['id'],
-      name: json['name'],
-      surname: json['surname'],
-      email: json['email'],
-      phoneNumber: json['phone_number'],
+      id: json["id"],
+      name: json["name"],
+      surname: json["surname"],
+      email: json["email"],
+      phoneNumber: json["phone_number"],
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'name': name,
-      'surname': surname,
-      'email': email,
-      'phone_number': phoneNumber,
+      "name": name,
+      "surname": surname,
+      "email": email,
+      "phone_number": phoneNumber,
     };
-  }
-
-  String get fullName => '$name $surname';
-
-  ContactModel copyWith({
-    int? id,
-    String? name,
-    String? surname,
-    String? email,
-    String? phoneNumber,
-  }) {
-    return ContactModel(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      surname: surname ?? this.surname,
-      email: email ?? this.email,
-      phoneNumber: phoneNumber ?? this.phoneNumber,
-    );
   }
 }

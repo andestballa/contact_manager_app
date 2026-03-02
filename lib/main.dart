@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import 'providers/auth_provider.dart';
 import 'providers/contact_provider.dart';
+import 'providers/search_provider.dart';
 import 'auth_gate.dart';
 import 'app_config.dart';
 
@@ -17,11 +18,18 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(
+        ChangeNotifierProvider<AuthProvider>(
           create: (_) => AuthProvider(),
         ),
-        ChangeNotifierProvider(
+
+        // Pagination + CRUD
+        ChangeNotifierProvider<ContactProvider>(
           create: (_) => ContactProvider(),
+        ),
+
+        // Search only
+        ChangeNotifierProvider<SearchProvider>(
+          create: (_) => SearchProvider(),
         ),
       ],
       child: MaterialApp(

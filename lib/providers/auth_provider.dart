@@ -20,6 +20,8 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  get baseUrl => null;
+
   Future<void> loadFromStorage() async {
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString("auth_token");
@@ -41,17 +43,31 @@ class AuthProvider extends ChangeNotifier {
         body: jsonEncode({"email": email.trim(), "password": password}),
       );
 
+      print("STATUS: ${response.statusCode}");
+      print("BODY: ${response.body}");
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        await _saveToken(data["token"]);
+        print("LOGIN DATA: $data");
+
+        final token = data["token"];
+        if (token == null || token.isEmpty) {
+          _error = "Login failed: no token returned";
+          print("ERROR: No token in response");
+          return false;
+        }
+
+        await _saveToken(token);
         return true;
       } else {
         final data = jsonDecode(response.body);
         _error = data["error"] ?? "Login failed";
+        print("LOGIN ERROR: $_error");
         return false;
       }
     } catch (e) {
-      _error = "Network error";
+      print("LOGIN EXCEPTION: $e");
+      _error = "Network error: $e";
       return false;
     } finally {
       _setLoading(false);
@@ -66,23 +82,40 @@ class AuthProvider extends ChangeNotifier {
     _error = null;
 
     try {
+      final url = Uri.parse("${AppConfig.baseUrl}/api/signup/");
       final response = await http.post(
-        Uri.parse("${AppConfig.baseUrl}/api/signup/"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"email": email.trim(), "password": password}),
+        url,
+        body: {
+          "email": email.trim(),
+          "password": password,
+        },
       );
 
-      final data = jsonDecode(response.body);
+      print("SIGNUP STATUS: ${response.statusCode}");
+      print("SIGNUP BODY: ${response.body}");
 
-      if (response.statusCode == 200) {
-        await _saveToken(data["token"]);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        print("SIGNUP DATA: $data");
+
+        final token = data["token"];
+        if (token == null || token.isEmpty) {
+          _error = "Signup failed: no token returned";
+          print("ERROR: No token in response");
+          return false;
+        }
+
+        await _saveToken(token);
         return true;
-      } else {
-        _error = data["error"] ?? "Signup failed";
-        return false;
       }
+
+      final data = jsonDecode(response.body);
+      _error = data["error"] ?? "Signup failed";
+      print("SIGNUP ERROR: $_error");
+      return false;
     } catch (e) {
-      _error = "Network error";
+      print("SIGNUP EXCEPTION: $e");
+      _error = "Network error: $e";
       return false;
     } finally {
       _setLoading(false);

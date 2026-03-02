@@ -11,16 +11,16 @@ class AuthGate extends StatelessWidget {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
 
-    print('AuthGate rebuild — loggedIn=${auth.isLoggedIn}');
-
     if (!auth.isInitialized) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
-    // TODO why no const?
-    return auth.isLoggedIn
-        ? ContactPage() // ⬅️ NO const
-        : LoginPage(); // ⬅️ NO const
+
+    if (!auth.isLoggedIn) {
+      return const LoginPage();
+    }
+
+    return const ContactPage(); // user is logged in
   }
 }
