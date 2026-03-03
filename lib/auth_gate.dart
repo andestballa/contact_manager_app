@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/auth_provider.dart';
-import 'login.dart';
-import 'homepage.dart';
+import 'ui/login.dart';
+import 'ui/contact.dart';
 
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
@@ -17,8 +17,10 @@ class AuthGate extends StatelessWidget {
       );
     }
 
-    return auth.isLoggedIn
-        ? const HomePage()
-        : const LoginPage();
+    if (!auth.isLoggedIn) {
+      return const LoginPage();
+    }
+
+    return const ContactPage(); // user is logged in
   }
 }

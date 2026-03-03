@@ -10,13 +10,16 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
+  AuthProvider() {
+    loadFromStorage();
+  }
+
   String? get token => _token;
   bool get isLoggedIn => _token != null;
   bool get isInitialized => _initialized;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  /// Thirret në start të app-it
   Future<void> loadFromStorage() async {
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString("auth_token");
@@ -24,7 +27,6 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// LOGIN
   Future<bool> login({
     required String email,
     required String password,
@@ -34,32 +36,42 @@ class AuthProvider extends ChangeNotifier {
 
     try {
       final response = await http.post(
-        Uri.parse("${AppConfig.baseUrl}/login/"),
+        Uri.parse("${AppConfig.baseUrl}/api/login/"),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "email": email.trim(),
-          "password": password,
-        }),
+        body: jsonEncode({"email": email.trim(), "password": password}),
       );
 
-      final data = jsonDecode(response.body);
+      print("STATUS: ${response.statusCode}");
+      print("BODY: ${response.body}");
 
       if (response.statusCode == 200) {
-        await _saveToken(data["token"]);
+        final data = jsonDecode(response.body);
+        print("LOGIN DATA: $data");
+
+        final token = data["token"];
+        if (token == null || token.isEmpty) {
+          _error = "Login failed: no token returned";
+          print("ERROR: No token in response");
+          return false;
+        }
+
+        await _saveToken(token);
         return true;
       } else {
+        final data = jsonDecode(response.body);
         _error = data["error"] ?? "Login failed";
+        print("LOGIN ERROR: $_error");
         return false;
       }
     } catch (e) {
-      _error = "Network error";
+      print("LOGIN EXCEPTION: $e");
+      _error = "Network error: $e";
       return false;
     } finally {
       _setLoading(false);
     }
   }
 
-  /// SIGNUP
   Future<bool> signup({
     required String email,
     required String password,
@@ -68,33 +80,46 @@ class AuthProvider extends ChangeNotifier {
     _error = null;
 
     try {
+      final url = Uri.parse("${AppConfig.baseUrl}/api/signup/");
       final response = await http.post(
-        Uri.parse("${AppConfig.baseUrl}/signup/"),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
+        url,
+        body: {
           "email": email.trim(),
           "password": password,
-        }),
+        },
       );
 
-      final data = jsonDecode(response.body);
+      print("SIGNUP STATUS: ${response.statusCode}");
+      print("SIGNUP BODY: ${response.body}");
 
-      if (response.statusCode == 200) {
-        await _saveToken(data["token"]);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        print("SIGNUP DATA: $data");
+
+        final token = data["token"];
+        if (token == null || token.isEmpty) {
+          _error = "Signup failed: no token returned";
+          print("ERROR: No token in response");
+          return false;
+        }
+
+        await _saveToken(token);
         return true;
-      } else {
-        _error = data["error"] ?? "Signup failed";
-        return false;
       }
+
+      final data = jsonDecode(response.body);
+      _error = data["error"] ?? "Signup failed";
+      print("SIGNUP ERROR: $_error");
+      return false;
     } catch (e) {
-      _error = "Network error";
+      print("SIGNUP EXCEPTION: $e");
+      _error = "Network error: $e";
       return false;
     } finally {
       _setLoading(false);
     }
   }
 
-  /// LOGOUT
   Future<void> logout() async {
     _token = null;
     final prefs = await SharedPreferences.getInstance();
@@ -102,7 +127,6 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Helpers
   Future<void> _saveToken(String token) async {
     _token = token;
     final prefs = await SharedPreferences.getInstance();
