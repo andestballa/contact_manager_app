@@ -8,12 +8,13 @@ import 'auth_gate.dart';
 import 'app_config.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
-// TODO create readme that explains the application infrastructure
-// TODO fix linter problems
-
+/// Root widget of the application.
+/// 
+/// Registers all global providers and sets up MaterialApp.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -24,11 +25,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider<AuthProvider>(
           create: (_) => AuthProvider(),
         ),
-
         ChangeNotifierProvider<ContactProvider>(
           create: (_) => ContactProvider(),
         ),
-
         ChangeNotifierProvider<SearchProvider>(
           create: (_) => SearchProvider(),
         ),

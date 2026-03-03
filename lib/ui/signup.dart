@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../providers/auth_provider.dart';
 
 class SignupPage extends StatefulWidget {
@@ -27,17 +28,18 @@ class _SignupPageState extends State<SignupPage> {
     final auth = context.read<AuthProvider>();
 
     final success = await auth.signup(
-      email: emailController.text,
-      password: passwordController.text,
+      email: emailController.text.trim(),
+      password: passwordController.text.trim(),
     );
 
+    if (!mounted) return; // ✅ Prevent context usage after async gap
+
     if (!success && auth.error != null) {
-      // TODO deal with the context warning
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(auth.error!)),
       );
     }
-    // Nëse success == true → AuthGate hap HomePage automatikisht
+    // If success == true → AuthGate will automatically navigate
   }
 
   @override
@@ -45,39 +47,78 @@ class _SignupPageState extends State<SignupPage> {
     final auth = context.watch<AuthProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Sign Up")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: emailController,
-                decoration: const InputDecoration(labelText: "Email"),
-                validator: (v) =>
-                    v != null && v.contains("@") ? null : "Email i pavlefshëm",
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: passwordController,
-                decoration: const InputDecoration(labelText: "Password"),
-                obscureText: true,
-                validator: (v) =>
-                    v != null && v.length >= 6 ? null : "Min 6 karaktere",
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: auth.isLoading ? null : _submit,
-                child: auth.isLoading
-                    ? const CircularProgressIndicator()
-                    : const Text("Sign Up"),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Ke llogari? Login"),
-              ),
-            ],
+      appBar: AppBar(
+        title: const Text("Sign Up"),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextFormField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  autofillHints: const [AutofillHints.email],
+                  decoration: const InputDecoration(
+                    labelText: "Email",
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (v) {
+                    if (v == null || v.isEmpty) {
+                      return "Email është i detyrueshëm";
+                    }
+                    if (!v.contains("@")) {
+                      return "Email i pavlefshëm";
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: passwordController,
+                  obscureText: true,
+                  autofillHints: const [AutofillHints.newPassword],
+                  decoration: const InputDecoration(
+                    labelText: "Password",
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (v) {
+                    if (v == null || v.isEmpty) {
+                      return "Password është i detyrueshëm";
+                    }
+                    if (v.length < 6) {
+                      return "Minimum 6 karaktere";
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: auth.isLoading ? null : _submit,
+                    child: auth.isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text("Sign Up"),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Ke llogari? Login"),
+                ),
+              ],
+            ),
           ),
         ),
       ),

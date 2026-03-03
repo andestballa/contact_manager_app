@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../providers/auth_provider.dart';
 import 'signup.dart';
 
@@ -28,17 +29,18 @@ class _LoginPageState extends State<LoginPage> {
     final auth = context.read<AuthProvider>();
 
     final success = await auth.login(
-      email: emailController.text,
-      password: passwordController.text,
+      email: emailController.text.trim(),
+      password: passwordController.text.trim(),
     );
 
+    if (!mounted) return; // ✅ Fix async context warning
+
     if (!success && auth.error != null) {
-      // TODO deal with the context warning
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(auth.error!)),
       );
     }
-    // Nëse success == true → AuthGate do bëjë redirect automatikisht
+    // If success == true → AuthGate will redirect automatically
   }
 
   @override
@@ -46,47 +48,82 @@ class _LoginPageState extends State<LoginPage> {
     final auth = context.watch<AuthProvider>();
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Login")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: emailController,
-                decoration: const InputDecoration(labelText: "Email"),
-                validator: (v) =>
-                    v != null && v.contains("@") ? null : "Email i pavlefshëm",
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                controller: passwordController,
-                decoration: const InputDecoration(labelText: "Password"),
-                obscureText: true,
-                validator: (v) =>
-                    v != null && v.isNotEmpty ? null : "Password i detyrueshëm",
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: auth.isLoading ? null : _submit,
-                  child: auth.isLoading
-                      ? const CircularProgressIndicator()
-                      : const Text("Login"),
+      appBar: AppBar(
+        title: const Text("Login"),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                TextFormField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  autofillHints: const [AutofillHints.email],
+                  decoration: const InputDecoration(
+                    labelText: "Email",
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (v) {
+                    if (v == null || v.isEmpty) {
+                      return "Email është i detyrueshëm";
+                    }
+                    if (!v.contains("@")) {
+                      return "Email i pavlefshëm";
+                    }
+                    return null;
+                  },
                 ),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const SignupPage()),
-                  );
-                },
-                child: const Text("Nuk ke llogari? Regjistrohu"),
-              ),
-            ],
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: passwordController,
+                  obscureText: true,
+                  autofillHints: const [AutofillHints.password],
+                  decoration: const InputDecoration(
+                    labelText: "Password",
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (v) {
+                    if (v == null || v.isEmpty) {
+                      return "Password i detyrueshëm";
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: auth.isLoading ? null : _submit,
+                    child: auth.isLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text("Login"),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const SignupPage(),
+                      ),
+                    );
+                  },
+                  child: const Text("Nuk ke llogari? Regjistrohu"),
+                ),
+              ],
+            ),
           ),
         ),
       ),
