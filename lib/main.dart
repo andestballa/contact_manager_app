@@ -11,6 +11,9 @@ void main() {
   runApp(const MyApp());
 }
 
+// TODO create readme that explains the application infrastructure
+// TODO fix linter problems
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -22,12 +25,10 @@ class MyApp extends StatelessWidget {
           create: (_) => AuthProvider(),
         ),
 
-        // Pagination + CRUD
         ChangeNotifierProvider<ContactProvider>(
           create: (_) => ContactProvider(),
         ),
 
-        // Search only
         ChangeNotifierProvider<SearchProvider>(
           create: (_) => SearchProvider(),
         ),

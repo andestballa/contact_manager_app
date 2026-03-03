@@ -41,6 +41,7 @@ class _AddContactPageState extends State<AddContactPage> {
     super.dispose();
   }
 
+  // TODO simplify
   void _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -83,6 +84,8 @@ class _AddContactPageState extends State<AddContactPage> {
 
   @override
   Widget build(BuildContext context) {
+    // TODO put them in the provider
+
     final isEditing = widget.contact != null;
     final title = isEditing ? "Edit Contact" : "Add Contact";
     final buttonText = isEditing ? "Update Contact" : "Add Contact";

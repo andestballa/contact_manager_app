@@ -28,9 +28,7 @@ class _ContactPageState extends State<ContactPage> {
 
   Future<void> _onRefresh() async {
     if (_isSearching) {
-      await context
-          .read<SearchProvider>()
-          .search(_searchController.text);
+      await context.read<SearchProvider>().search(_searchController.text);
     } else {
       await context.read<ContactProvider>().fetchContacts(page: 1);
     }
@@ -45,6 +43,7 @@ class _ContactPageState extends State<ContactPage> {
     setState(() {}); // refresh UI for suffix icon + pagination toggle
   }
 
+  // TODO break up components into separate files for example the pagination buttons
   @override
   Widget build(BuildContext context) {
     final contactProvider = context.watch<ContactProvider>();
@@ -111,13 +110,11 @@ class _ContactPageState extends State<ContactPage> {
                 // -----------------------
                 if (isSearching) {
                   if (searchProvider.isLoading) {
-                    return const Center(
-                        child: CircularProgressIndicator());
+                    return const Center(child: CircularProgressIndicator());
                   }
 
                   if (searchProvider.error != null) {
-                    return Center(
-                        child: Text(searchProvider.error!));
+                    return Center(child: Text(searchProvider.error!));
                   }
 
                   if (searchProvider.results.isEmpty) {
@@ -134,19 +131,16 @@ class _ContactPageState extends State<ContactPage> {
                     child: ListView.builder(
                       itemCount: searchProvider.results.length,
                       itemBuilder: (context, index) {
-                        final contact =
-                            searchProvider.results[index];
+                        final contact = searchProvider.results[index];
 
                         return ListTile(
-                          title: Text(
-                              "${contact.name} ${contact.surname}"),
+                          title: Text("${contact.name} ${contact.surname}"),
                           subtitle: Text(contact.email),
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    AddContactPage(
-                                        contact: contact),
+                                    AddContactPage(contact: contact),
                               ),
                             );
                           },
@@ -161,13 +155,11 @@ class _ContactPageState extends State<ContactPage> {
                 // -----------------------
                 if (contactProvider.isLoading &&
                     contactProvider.contacts.isEmpty) {
-                  return const Center(
-                      child: CircularProgressIndicator());
+                  return const Center(child: CircularProgressIndicator());
                 }
 
                 if (contactProvider.error != null) {
-                  return Center(
-                      child: Text(contactProvider.error!));
+                  return Center(child: Text(contactProvider.error!));
                 }
 
                 if (contactProvider.contacts.isEmpty) {
@@ -182,22 +174,18 @@ class _ContactPageState extends State<ContactPage> {
                 return RefreshIndicator(
                   onRefresh: _onRefresh,
                   child: ListView.builder(
-                    itemCount:
-                        contactProvider.contacts.length,
+                    itemCount: contactProvider.contacts.length,
                     itemBuilder: (context, index) {
-                      final contact =
-                          contactProvider.contacts[index];
+                      final contact = contactProvider.contacts[index];
 
                       return ListTile(
-                        title: Text(
-                            "${contact.name} ${contact.surname}"),
+                        title: Text("${contact.name} ${contact.surname}"),
                         subtitle: Text(contact.email),
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) =>
-                                  AddContactPage(
-                                      contact: contact),
+                                  AddContactPage(contact: contact),
                             ),
                           );
                         },
@@ -216,30 +204,26 @@ class _ContactPageState extends State<ContactPage> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),
               child: Row(
-                mainAxisAlignment:
-                    MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconButton(
                     onPressed: contactProvider.currentPage > 1
                         ? () => contactProvider.fetchContacts(
-                              page: contactProvider.currentPage -
-                                  1,
-                            )
+                            page: contactProvider.currentPage - 1,
+                          )
                         : null,
                     icon: const Icon(Icons.arrow_back),
                   ),
                   Text(
                     "Page ${contactProvider.currentPage}",
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   IconButton(
-                    onPressed: contactProvider.currentPage <
-                            contactProvider.totalPages
+                    onPressed:
+                        contactProvider.currentPage < contactProvider.totalPages
                         ? () => contactProvider.fetchContacts(
-                              page: contactProvider.currentPage +
-                                  1,
-                            )
+                            page: contactProvider.currentPage + 1,
+                          )
                         : null,
                     icon: const Icon(Icons.arrow_forward),
                   ),
