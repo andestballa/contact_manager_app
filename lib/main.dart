@@ -7,6 +7,7 @@ import 'providers/search_provider.dart';
 import 'auth_gate.dart';
 import 'app_config.dart';
 
+// TODO fix all warnings in the console
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());

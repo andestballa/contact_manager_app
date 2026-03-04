@@ -5,6 +5,8 @@ import '../../providers/contact_provider.dart';
 class PaginationControls extends StatelessWidget {
   const PaginationControls({super.key});
 
+  // TODO declare callbacks here instead of inlining in onPressed
+  // TODO declare long variables before returning widget instead of inlining
   @override
   Widget build(BuildContext context) {
     final contactProvider = context.watch<ContactProvider>();

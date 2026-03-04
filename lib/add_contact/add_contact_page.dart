@@ -15,6 +15,7 @@ class AddContactPage extends StatelessWidget {
     final provider = context.read<ContactProvider>();
     final isEditing = contact != null;
 
+    // TODO providers should not set values in the build methods
     // Initialize form values in provider
     provider.setFormData(
       name: contact?.name ?? '',
@@ -69,6 +70,7 @@ class AddContactPage extends StatelessWidget {
     );
   }
 
+  // TODO create widget instead of helper method, also no need to pass provider as a parameter as you can get it from context 
   Widget _buildTextField(ContactProvider provider, String field, String label, {TextInputType? keyboardType}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),

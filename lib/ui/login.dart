@@ -36,6 +36,7 @@ class _LoginPageState extends State<LoginPage> {
     if (!mounted) return; // ✅ Fix async context warning
 
     if (!success && auth.error != null) {
+      // TODO make this an extension method instead of calling it like this and replace it everywhere its used
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(auth.error!)),
       );

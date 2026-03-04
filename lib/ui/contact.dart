@@ -41,6 +41,7 @@ class _ContactPageState extends State<ContactPage> {
     }
   }
 
+  // TODO since the provider is used on both conditions its a better practice to assign it to a variable
   void _onSearchChanged(String value) {
     if (value.trim().isEmpty) {
       context.read<SearchProvider>().clear();
@@ -115,7 +116,7 @@ class _ContactPageState extends State<ContactPage> {
       ),
     );
   }
-
+  // TODO create widget instead of helper method, also no need to pass provider as a parameter as you can get it from context 
   Widget _buildSearchResults(SearchProvider searchProvider) {
     if (searchProvider.isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -157,6 +158,7 @@ class _ContactPageState extends State<ContactPage> {
     );
   }
 
+  // TODO create widget instead of helper method, also no need to pass provider as a parameter as you can get it from context 
   Widget _buildContactList(ContactProvider contactProvider) {
     if (contactProvider.isLoading &&
         contactProvider.contacts.isEmpty) {
