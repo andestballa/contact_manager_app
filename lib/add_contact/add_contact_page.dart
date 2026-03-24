@@ -1,28 +1,42 @@
-// lib/ui/add_contact_page.dart
+// lib/add_contact/add_contact_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/contact_provider.dart';
 import '../models/contact_model.dart';
+import 'widgets/contatc_form_field.dart';
 
-class AddContactPage extends StatelessWidget {
+class AddContactPage extends StatefulWidget {
   final ContactModel? contact;
 
   const AddContactPage({super.key, this.contact});
 
   @override
-  Widget build(BuildContext context) {
-    final provider = context.read<ContactProvider>();
-    final isEditing = contact != null;
+  State<AddContactPage> createState() => _AddContactPageState();
+}
 
-    // TODO providers should not set values in the build methods
-    // Initialize form values in provider
-    provider.setFormData(
-      name: contact?.name ?? '',
-      surname: contact?.surname ?? '',
-      email: contact?.email ?? '',
-      phoneNumber: contact?.phoneNumber ?? '',
-    );
+class _AddContactPageState extends State<AddContactPage> {
+  @override
+  void initState() {
+    super.initState();
+
+    // Initialize provider form data AFTER build frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<ContactProvider>();
+
+      provider.setFormData(
+        name: widget.contact?.name ?? '',
+        surname: widget.contact?.surname ?? '',
+        email: widget.contact?.email ?? '',
+        phoneNumber: widget.contact?.phoneNumber ?? '',
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isEditing = widget.contact != null;
 
     return Scaffold(
       appBar: AppBar(
@@ -36,10 +50,24 @@ class AddContactPage extends StatelessWidget {
               key: provider.formKey,
               child: Column(
                 children: [
-                  _buildTextField(provider, 'name', 'Name'),
-                  _buildTextField(provider, 'surname', 'Surname'),
-                  _buildTextField(provider, 'email', 'Email', keyboardType: TextInputType.emailAddress),
-                  _buildTextField(provider, 'phoneNumber', 'Phone', keyboardType: TextInputType.phone),
+                  const ContactFormField(
+                    field: 'name',
+                    label: 'Name',
+                  ),
+                  const ContactFormField(
+                    field: 'surname',
+                    label: 'Surname',
+                  ),
+                  const ContactFormField(
+                    field: 'email',
+                    label: 'Email',
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const ContactFormField(
+                    field: 'phoneNumber',
+                    label: 'Phone',
+                    keyboardType: TextInputType.phone,
+                  ),
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
@@ -47,7 +75,10 @@ class AddContactPage extends StatelessWidget {
                       onPressed: provider.isLoading
                           ? null
                           : () async {
-                              final success = await provider.submitContact(isEditing ? contact : null);
+                              final success = await provider.submitContact(
+                                isEditing ? widget.contact : null,
+                              );
+
                               if (success && context.mounted) {
                                 Navigator.pop(context);
                               }
@@ -56,9 +87,15 @@ class AddContactPage extends StatelessWidget {
                           ? const SizedBox(
                               height: 20,
                               width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
                             )
-                          : Text(isEditing ? "Update Contact" : "Add Contact"),
+                          : Text(
+                              isEditing
+                                  ? "Update Contact"
+                                  : "Add Contact",
+                            ),
                     ),
                   ),
                 ],
@@ -66,23 +103,6 @@ class AddContactPage extends StatelessWidget {
             );
           },
         ),
-      ),
-    );
-  }
-
-  // TODO create widget instead of helper method, also no need to pass provider as a parameter as you can get it from context 
-  Widget _buildTextField(ContactProvider provider, String field, String label, {TextInputType? keyboardType}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: TextFormField(
-        initialValue: provider.getField(field),
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-        ),
-        validator: (value) => value == null || value.trim().isEmpty ? "$label is required" : null,
-        onChanged: (val) => provider.updateField(field, val),
       ),
     );
   }

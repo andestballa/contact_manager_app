@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/auth_provider.dart';
+import '../core/extensions/snackbar_extension.dart';
 import 'signup.dart';
 
 class LoginPage extends StatefulWidget {
@@ -13,8 +14,8 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
   @override
   void dispose() {
@@ -33,20 +34,18 @@ class _LoginPageState extends State<LoginPage> {
       password: passwordController.text.trim(),
     );
 
-    if (!mounted) return; // ✅ Fix async context warning
+    if (!mounted) return;
 
     if (!success && auth.error != null) {
-      // TODO make this an extension method instead of calling it like this and replace it everywhere its used
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(auth.error!)),
-      );
+      context.showErrorSnackBar(auth.error!);
     }
-    // If success == true → AuthGate will redirect automatically
+    // On success → AuthGate handles navigation
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final bool isLoading = auth.isLoading;
 
     return Scaffold(
       appBar: AppBar(
@@ -61,6 +60,7 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // ---------------- Email ----------------
                 TextFormField(
                   controller: emailController,
                   keyboardType: TextInputType.emailAddress,
@@ -69,17 +69,20 @@ class _LoginPageState extends State<LoginPage> {
                     labelText: "Email",
                     border: OutlineInputBorder(),
                   ),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) {
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
                       return "Email është i detyrueshëm";
                     }
-                    if (!v.contains("@")) {
+                    if (!value.contains("@")) {
                       return "Email i pavlefshëm";
                     }
                     return null;
                   },
                 ),
+
                 const SizedBox(height: 16),
+
+                // ---------------- Password ----------------
                 TextFormField(
                   controller: passwordController,
                   obscureText: true,
@@ -88,19 +91,22 @@ class _LoginPageState extends State<LoginPage> {
                     labelText: "Password",
                     border: OutlineInputBorder(),
                   ),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) {
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
                       return "Password i detyrueshëm";
                     }
                     return null;
                   },
                 ),
+
                 const SizedBox(height: 24),
+
+                // ---------------- Login Button ----------------
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: auth.isLoading ? null : _submit,
-                    child: auth.isLoading
+                    onPressed: isLoading ? null : _submit,
+                    child: isLoading
                         ? const SizedBox(
                             height: 20,
                             width: 20,
@@ -111,16 +117,21 @@ class _LoginPageState extends State<LoginPage> {
                         : const Text("Login"),
                   ),
                 ),
+
                 const SizedBox(height: 12),
+
+                // ---------------- Signup Redirect ----------------
                 TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const SignupPage(),
-                      ),
-                    );
-                  },
+                  onPressed: isLoading
+                      ? null
+                      : () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const SignupPage(),
+                            ),
+                          );
+                        },
                   child: const Text("Nuk ke llogari? Regjistrohu"),
                 ),
               ],
