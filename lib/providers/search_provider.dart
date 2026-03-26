@@ -8,15 +8,22 @@ class SearchProvider extends ChangeNotifier {
   List<ContactModel> _results = [];
   bool _isLoading = false;
   String? _error;
+  String? _lastQuery; // ✅ store last search term
 
+  // ---------------- Getters ----------------
   List<ContactModel> get results => _results;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  String? get lastQuery => _lastQuery;
 
-  /// Search contacts (NO pagination logic here)
+  /// Search contacts (no pagination here)
   Future<void> search(String query) async {
-    if (query.trim().isEmpty) {
+    final trimmedQuery = query.trim();
+    _lastQuery = trimmedQuery; // ✅ save last search term
+
+    if (trimmedQuery.isEmpty) {
       _results = [];
+      _error = null;
       notifyListeners();
       return;
     }
@@ -26,13 +33,11 @@ class SearchProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final data =
-          await _service.fetchContacts(page: 1, query: query);
+      final data = await _service.fetchContacts(page: 1, query: trimmedQuery);
 
-      final results = data['results'] as List;
+      final resultsList = data['results'] as List<dynamic>;
 
-      _results =
-          results.map((e) => ContactModel.fromJson(e)).toList();
+      _results = resultsList.map((e) => ContactModel.fromJson(e)).toList();
     } catch (e) {
       _error = e.toString();
       _results = [];
@@ -42,8 +47,11 @@ class SearchProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Clear search results
   void clear() {
     _results = [];
+    _error = null;
+    _lastQuery = null; // ✅ reset last query
     notifyListeners();
   }
 }

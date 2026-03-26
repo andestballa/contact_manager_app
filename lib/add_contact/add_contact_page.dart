@@ -1,8 +1,11 @@
-// lib/ui/add_contact_page.dart
+// lib/add_contact/add_contact_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../providers/contact_provider.dart';
 import '../models/contact_model.dart';
+import 'widgets/contatc_form_field.dart';
 
 class AddContactPage extends StatefulWidget {
   final ContactModel? contact;
@@ -14,121 +17,91 @@ class AddContactPage extends StatefulWidget {
 }
 
 class _AddContactPageState extends State<AddContactPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _surnameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
-
   @override
   void initState() {
     super.initState();
-    // If editing, populate fields with existing contact data
-    if (widget.contact != null) {
-      _nameController.text = widget.contact!.name;
-      _surnameController.text = widget.contact!.surname;
-      _emailController.text = widget.contact!.email;
-      _phoneController.text = widget.contact!.phoneNumber;
-    }
-  }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _surnameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    super.dispose();
-  }
+    // Initialize provider form data AFTER build frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider = context.read<ContactProvider>();
 
-  // TODO simplify
-  void _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    final contact = widget.contact != null
-        ? ContactModel(
-            id: widget.contact!.id,
-            name: _nameController.text,
-            surname: _surnameController.text,
-            email: _emailController.text,
-            phoneNumber: _phoneController.text,
-          )
-        : ContactModel(
-            name: _nameController.text,
-            surname: _surnameController.text,
-            email: _emailController.text,
-            phoneNumber: _phoneController.text,
-          );
-
-    final provider = context.read<ContactProvider>();
-    try {
-      if (widget.contact != null) {
-        await provider.updateContact(contact);
-      } else {
-        await provider.createContact(contact);
-      }
-
-      if (provider.error == null) {
-        Navigator.pop(context); // Back to ContactPage
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(provider.error!)),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+      provider.setFormData(
+        name: widget.contact?.name ?? '',
+        surname: widget.contact?.surname ?? '',
+        email: widget.contact?.email ?? '',
+        phoneNumber: widget.contact?.phoneNumber ?? '',
       );
-    }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // TODO put them in the provider
-
     final isEditing = widget.contact != null;
-    final title = isEditing ? "Edit Contact" : "Add Contact";
-    final buttonText = isEditing ? "Update Contact" : "Add Contact";
 
     return Scaffold(
-      appBar: AppBar(title: Text(title)),
+      appBar: AppBar(
+        title: Text(isEditing ? "Edit Contact" : "Add Contact"),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: "Name"),
-                validator: (value) =>
-                    value!.isEmpty ? "Name is required" : null,
+        child: Consumer<ContactProvider>(
+          builder: (context, provider, _) {
+            return Form(
+              key: provider.formKey,
+              child: Column(
+                children: [
+                  const ContactFormField(
+                    field: 'name',
+                    label: 'Name',
+                  ),
+                  const ContactFormField(
+                    field: 'surname',
+                    label: 'Surname',
+                  ),
+                  const ContactFormField(
+                    field: 'email',
+                    label: 'Email',
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const ContactFormField(
+                    field: 'phoneNumber',
+                    label: 'Phone',
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: provider.isLoading
+                          ? null
+                          : () async {
+                              final success = await provider.submitContact(
+                                isEditing ? widget.contact : null,
+                              );
+
+                              if (success && context.mounted) {
+                                Navigator.pop(context);
+                              }
+                            },
+                      child: provider.isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              isEditing
+                                  ? "Update Contact"
+                                  : "Add Contact",
+                            ),
+                    ),
+                  ),
+                ],
               ),
-              TextFormField(
-                controller: _surnameController,
-                decoration: const InputDecoration(labelText: "Surname"),
-                validator: (value) =>
-                    value!.isEmpty ? "Surname is required" : null,
-              ),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: "Email"),
-                validator: (value) =>
-                    value!.isEmpty ? "Email is required" : null,
-              ),
-              TextFormField(
-                controller: _phoneController,
-                decoration: const InputDecoration(labelText: "Phone"),
-                validator: (value) =>
-                    value!.isEmpty ? "Phone is required" : null,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _submit,
-                child: Text(buttonText),
-              ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

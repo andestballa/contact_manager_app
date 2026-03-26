@@ -41,17 +41,12 @@ class AuthProvider extends ChangeNotifier {
         body: jsonEncode({"email": email.trim(), "password": password}),
       );
 
-      print("STATUS: ${response.statusCode}");
-      print("BODY: ${response.body}");
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        print("LOGIN DATA: $data");
 
         final token = data["token"];
         if (token == null || token.isEmpty) {
           _error = "Login failed: no token returned";
-          print("ERROR: No token in response");
           return false;
         }
 
@@ -60,11 +55,9 @@ class AuthProvider extends ChangeNotifier {
       } else {
         final data = jsonDecode(response.body);
         _error = data["error"] ?? "Login failed";
-        print("LOGIN ERROR: $_error");
         return false;
       }
     } catch (e) {
-      print("LOGIN EXCEPTION: $e");
       _error = "Network error: $e";
       return false;
     } finally {
@@ -89,17 +82,13 @@ class AuthProvider extends ChangeNotifier {
         },
       );
 
-      print("SIGNUP STATUS: ${response.statusCode}");
-      print("SIGNUP BODY: ${response.body}");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
-        print("SIGNUP DATA: $data");
 
         final token = data["token"];
         if (token == null || token.isEmpty) {
           _error = "Signup failed: no token returned";
-          print("ERROR: No token in response");
           return false;
         }
 
@@ -109,10 +98,8 @@ class AuthProvider extends ChangeNotifier {
 
       final data = jsonDecode(response.body);
       _error = data["error"] ?? "Signup failed";
-      print("SIGNUP ERROR: $_error");
       return false;
     } catch (e) {
-      print("SIGNUP EXCEPTION: $e");
       _error = "Network error: $e";
       return false;
     } finally {

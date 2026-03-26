@@ -10,7 +10,6 @@ class ContactService {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString("auth_token");
 
-    print("TOKEN FROM STORAGE: $token");
 
     if (token == null) {
       throw Exception("User not authenticated");
@@ -74,8 +73,6 @@ class ContactService {
       body: jsonEncode(contact.toJson()),
     );
 
-    print("CREATE STATUS: ${response.statusCode}");
-    print("CREATE BODY: ${response.body}");
 
     if (response.statusCode != 201) {
       throw Exception("Failed to create contact (Status: ${response.statusCode})");
@@ -91,9 +88,6 @@ class ContactService {
       headers: await _headers(),
       body: jsonEncode(contact.toJson()),
     );
-
-    print("UPDATE STATUS: ${response.statusCode}");
-    print("UPDATE BODY: ${response.body}");
 
     if (response.statusCode != 200) {
       throw Exception("Failed to update contact (Status: ${response.statusCode})");
