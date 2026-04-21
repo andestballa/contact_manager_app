@@ -7,6 +7,7 @@ import '../add_contact/add_contact_page.dart';
 import '../ui/paginations_control.dart';
 import '../contact/widgeds/contact_list_widget.dart';
 import '../contact/widgeds/search_results_widget.dart';
+import '../core/extensions/snackbar_extension.dart';
 
 class ContactPage extends StatefulWidget {
   const ContactPage({super.key});
@@ -43,7 +44,6 @@ class _ContactPageState extends State<ContactPage> {
     }
   }
 
-  // ✅ Provider assigned to variable (better practice)
   void _onSearchChanged(String value) {
     final searchProvider = context.read<SearchProvider>();
     final trimmedValue = value.trim();
@@ -64,17 +64,44 @@ class _ContactPageState extends State<ContactPage> {
     setState(() {});
   }
 
+  Future<void> _importCsv() async {
+    final provider = context.read<ContactProvider>();
+
+    await provider.importFromCsv();
+
+    if (!mounted) return;
+
+    if (provider.error != null) {
+      context.showErrorSnackBar("Import failed: ${provider.error}");
+    } else if (provider.importedContactsCount > 0) {
+      context.showSuccessSnackBar(
+        "✅ Imported ${provider.importedContactsCount} contacts successfully!",
+      );
+    } else {
+      context.showErrorSnackBar("No contacts were imported from CSV.");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isSearching = _isSearching;
+    final isLoading = context.watch<ContactProvider>().isLoading;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("Contacts"),
         actions: [
+          // Refresh
           IconButton(
             onPressed: _onRefresh,
             icon: const Icon(Icons.refresh),
+          ),
+
+          // CSV Import
+          IconButton(
+            onPressed: isLoading ? null : _importCsv,
+            icon: const Icon(Icons.upload_file),
+            tooltip: "Import CSV",
           ),
         ],
       ),
@@ -117,6 +144,7 @@ class _ContactPageState extends State<ContactPage> {
                 : const ContactListWidget(),
           ),
 
+          // PAGINATION
           if (!isSearching) const PaginationControls(),
         ],
       ),

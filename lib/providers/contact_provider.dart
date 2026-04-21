@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../models/contact_model.dart';
 import '../services/contact_service.dart';
+import '../services/csv_service.dart';
 
 class ContactProvider extends ChangeNotifier {
   final ContactService _service = ContactService();
@@ -15,12 +16,14 @@ class ContactProvider extends ChangeNotifier {
 
   int _currentPage = 1;
   int _totalPages = 1;
+  int _importedContactsCount = 0;
 
   List<ContactModel> get contacts => _contacts;
   bool get isLoading => _isLoading;
   String? get error => _error;
   int get currentPage => _currentPage;
   int get totalPages => _totalPages;
+  int get importedContactsCount => _importedContactsCount;
 
   Future<void> fetchContacts({int page = 1}) async {
     if (page < 1) return;
@@ -98,7 +101,12 @@ class ContactProvider extends ChangeNotifier {
   String email = '';
   String phoneNumber = '';
 
-  void setFormData({String? name, String? surname, String? email, String? phoneNumber}) {
+  void setFormData({
+    String? name,
+    String? surname,
+    String? email,
+    String? phoneNumber,
+  }) {
     this.name = name ?? this.name;
     this.surname = surname ?? this.surname;
     this.email = email ?? this.email;
@@ -169,5 +177,40 @@ class ContactProvider extends ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  Future<void> importFromCsv() async {
+    _isLoading = true;
+    _error = null;
+    _importedContactsCount = 0;
+    notifyListeners();
+
+    try {
+      final csvService = CsvService();
+      final successCount = await csvService.importContactsFromCsv();
+
+      if (successCount == null) {
+        _isLoading = false;
+        notifyListeners();
+        return; // User canceled file picking
+      }
+
+      _importedContactsCount = successCount;
+
+      if (successCount == 0) {
+        _error = 'No contacts were imported from the CSV file.';
+      } else {
+        print("✅ Successfully imported $successCount contacts");
+      }
+
+      await fetchContacts(page: 1); // Start from page 1 to see new imports
+    } catch (e) {
+      _error = e.toString();
+      _importedContactsCount = 0;
+      print("❌ Import error: $_error");
+    }
+
+    _isLoading = false;
+    notifyListeners();
   }
 }
